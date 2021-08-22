@@ -11,8 +11,9 @@ generated_jobs=''
 generated_groups=''
 
 for config_file in $(echo "${config}" | jq -r '.[]'); do
+    autopilot_config="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.autopilot_config')"
     generated_groups+="
-- name: "${config_file}"
+- name: "${autopilot_config:?}"
   jobs:
 "
 
