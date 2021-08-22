@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euo pipefail
+
+exec 3>&1           # Make stdout available as fd 3 for the result
+exec 1>&2           # Redirect all output to stderr for logging
+
+# INPUT *******************************************************************
+jq -M -S . <&0 | tee /tmp/input.json >/dev/null   # tee redirects to a file.
+
+uri=$(jq -r .source.uri < /tmp/input.json)
+branch=$(jq -r '.source.branch // empty' < /tmp/input.json)
+prev_ref=$(jq -r '.version.ref // empty' < /tmp/input.json)
+
+# CHECK *******************************************************************
+if [[ -z "${branch}" ]]; then
+    ref="$(git ls-remote "${uri}" | grep "HEAD" | cut -f1)"
+else
+    ref="$(git ls-remote -h "${uri}" | grep "refs/heads/${branch}" | cut -f1)"
+fi
+
+# OUTPUT ******************************************************************
+if [[ -z "${prev_ref}" ]]; then
+    json_output='[{ "ref": "'$ref'" }]'
+elif [[ "${ref}" == "${prev_ref}" ]]; then
+    json_output='[{ "ref": "'$prev_ref'" }]'
+else
+    json_output='[{ "ref": "'$prev_ref'" }, { "ref": "'$ref'" }]'
+fi
+
+jq -n "$json_output" >&3
