@@ -10,7 +10,7 @@ generated_repositories=''
 generated_jobs=''
 generated_groups=''
 
-for config_file in $(echo "${config}" | jq -r '.[]'); do
+for config_file in $(echo "${config}" | jq -r '.[][]'); do
     autopilot_config="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.autopilot_config')"
     generated_groups+="
 - name: "${autopilot_config:?}"
@@ -35,9 +35,11 @@ for config_file in $(echo "${config}" | jq -r '.[]'); do
     done
 
     pipelines="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.pipelines[] | @base64')"
+    team="$(echo "${config}" | jq -r '.[] | to_entries[] | select(.value=="'$config_file'").key')"
+
     for pipeline in ${pipelines}; do
       _jq() {
-      echo ${pipeline} | base64 --decode | jq -r "${1}"
+      echo ${pipeline} | base64 --decode | jq -r "${1}" --arg team "${team}"
       }
 
       generated_jobs+="$(_jq '"
@@ -49,7 +51,7 @@ for config_file in $(echo "${config}" | jq -r '.[]'); do
   - get: \(.repository)
     trigger: true
   - set_pipeline: \(.name)
-    team: \(.team)
+    team: \($team)
     file: \(.repository)/\(.manifest)
     vars: \(.vars)
 "')"
