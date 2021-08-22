@@ -10,6 +10,7 @@ jq -M -S . <&0 | tee /tmp/input.json >/dev/null   # tee redirects to a file.
 uri=$(jq -r .source.uri < /tmp/input.json)
 branch=$(jq -r '.source.branch // empty' < /tmp/input.json)
 prev_ref=$(jq -r '.version.ref // empty' < /tmp/input.json)
+prev_date=$(jq -r '.version.date // empty' < /tmp/input.json)
 
 # CHECK *******************************************************************
 if [[ -z "${branch}" ]]; then
@@ -17,14 +18,16 @@ if [[ -z "${branch}" ]]; then
 else
     ref="$(git ls-remote -h "${uri}" | grep "refs/heads/${branch}" | cut -f1)"
 fi
+curr_date="$(date)"
 
 # OUTPUT ******************************************************************
 if [[ -z "${prev_ref}" ]]; then
-    json_output='[{ "ref": "'$ref'" }]'
+    json_output='[{ "ref": "'$ref'", "date":"'${curr_date}'" }]'
 elif [[ "${ref}" == "${prev_ref}" ]]; then
-    json_output='[{ "ref": "'$prev_ref'" }]'
+    json_output='[{ "ref": "'$prev_ref'", "date":"'${prev_date}'" }]'
 else
-    json_output='[{ "ref": "'$prev_ref'" }, { "ref": "'$ref'" }]'
+    json_output='[{ "ref": "'$prev_ref'", "date":"'${prev_date}'" }
+                , { "ref": "'$ref'", "date":"'${curr_date}'" }]'
 fi
 
 jq -n "$json_output" >&3

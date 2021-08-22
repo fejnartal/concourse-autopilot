@@ -13,6 +13,7 @@ jq -M -S . <&0 | tee /tmp/input.json >/dev/null    # tee redirects to a file.
 source=$(jq -r '.source' < /tmp/input.json)
 uri=$(jq -r '.source.uri' < /tmp/input.json)
 ref=$(jq -r '.version.ref // empty' < /tmp/input.json)
+date=$(jq -r '.version.date // empty' < /tmp/input.json)
 
 # IN **********************************************************************
 git clone --no-checkout "${uri}" /tmp/repository
@@ -21,6 +22,6 @@ git -C /tmp/repository checkout "${ref}"
 /opt/resource/scripts/gen-autopilot-pipeline.sh "/tmp/repository/" "${source}" > ./pipeline.yml
 
 # OUTPUT ******************************************************************
-json_output='{ "version":{ "ref": "'$ref'" }}'
+json_output='{ "version":{ "ref": "'$ref'", "date": "'$date'" }}'
 
 jq -n "$json_output" >&3
