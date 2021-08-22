@@ -10,8 +10,9 @@ generated_repositories=''
 generated_jobs=''
 generated_groups=''
 
-for config_file in $(echo "${config}" | jq -r '.[][]'); do
-    autopilot_config="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.autopilot_config')"
+for config_wildcard in $(echo "${config}" | jq -r '.[][]'); do
+for config_file in $(ls ${repodir}/${config_wildcard} 2> /dev/null); do
+    autopilot_config="$(cat "${config_file}" | yq eval -o=j | jq -r '.autopilot_config')"
     generated_groups+="
 - name: "${autopilot_config:?}"
   jobs:
@@ -19,7 +20,7 @@ for config_file in $(echo "${config}" | jq -r '.[][]'); do
 
     # This way of looping through a json array is documented by Ruben Koster:
     # https://www.starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
-    repositories="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.repositories[] | @base64')"
+    repositories="$(cat "${config_file}" | yq eval -o=j | jq -r '.repositories[] | @base64')"
     for repository in ${repositories}; do
       _jq() {
       echo ${repository} | base64 --decode | jq -r "${1}"
@@ -34,8 +35,8 @@ for config_file in $(echo "${config}" | jq -r '.[][]'); do
 "')"
     done
 
-    pipelines="$(cat "${repodir}/${config_file}" | yq eval -o=j | jq -r '.pipelines[] | @base64')"
-    team="$(echo "${config}" | jq -r '.[] | to_entries[] | select(.value=="'$config_file'").key')"
+    pipelines="$(cat "${config_file}" | yq eval -o=j | jq -r '.pipelines[] | @base64')"
+    team="$(echo "${config}" | jq -r '.[] | to_entries[] | select(.value=="'$config_wildcard'").key')"
 
     for pipeline in ${pipelines}; do
       _jq() {
@@ -60,6 +61,7 @@ for config_file in $(echo "${config}" | jq -r '.[][]'); do
   - set-\(.name)
 "')"
     done
+done
 done
 
 generated_manifest="
