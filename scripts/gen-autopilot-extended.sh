@@ -51,9 +51,7 @@ for config_file in $(ls ${repodir}/${config_wildcard} 2> /dev/null); do
       generated_repositories+="$(_jq '"
 - name: \(.name)
   type: git
-  source:
-    uri: \(.uri)
-    branch: \(.branch)
+  source: \(.)
 "')"
     done
 
