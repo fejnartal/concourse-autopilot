@@ -1,12 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-target_path="$1"
-target_abs="$(realpath "${target_path}")"
-target_folder="$(dirname "${target_abs}")"
-
-repodir="$(git -C "${target_folder}" rev-parse --show-toplevel)"
-target_rel="$(realpath --relative-to="${repodir}" "${target_abs}")"
+repodir="$1"
+target_path="$2"
 
 {
   config="$(yq eval -o=json "${target_path}" 2>/dev/null | jq -rc '.config')"
@@ -137,7 +133,7 @@ jobs:
         - \"-e\"
         - \"-c\"
         - |
-          /opt/resource/scripts/gen-autopilot-extended.sh \"repository/${target_rel}\" > regenerated/pipeline.yml
+          /opt/resource/scripts/gen-autopilot-extended.sh \"repository\" \"${target_path}\" > regenerated/pipeline.yml
 
   - set_pipeline: self
     file: regenerated/pipeline.yml
