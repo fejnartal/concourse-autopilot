@@ -4,6 +4,8 @@ set -euo pipefail
 repodir="$1"
 target_path="$2"
 
+pushd "${repodir}" &>/dev/null
+
 {
   config="$(yq eval -o=json "${target_path}" 2>/dev/null | jq -rc '.config')"
   vcs_source="$(yq eval -o=json "${target_path}" 2>/dev/null | jq -rc '.vcs_resource.source')"
@@ -21,7 +23,7 @@ generated_jobs=''
 generated_groups=''
 
 for config_wildcard in $(echo "${config}" | jq -r '.[][]'); do
-for config_file in $(ls ${repodir}/${config_wildcard} 2> /dev/null); do
+for config_file in $(ls ${config_wildcard} 2> /dev/null); do
     {
       autopilot_config="$(yq eval -o=json "${config_file}" 2>/dev/null | jq -rc '.autopilot_config')"
     } || {
@@ -140,6 +142,8 @@ jobs:
 
 ${generated_jobs}
 "
+
+popd &> /dev/null
 
 {
   echo "${generated_manifest}" | yq eval -o=json 2>/dev/null | jq '.resources |= unique' | yq eval --prettyPrint 2>/dev/null
