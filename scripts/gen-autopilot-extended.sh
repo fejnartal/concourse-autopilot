@@ -22,7 +22,11 @@ generated_repositories=''
 generated_jobs=''
 generated_groups=''
 
-for config_wildcard in $(echo "${config}" | jq -r '.[][]'); do
+num_configs="$(echo "${config}" | jq -r '.[] | length')"
+for ((cur_config=0; cur_config<num_configs; cur_config++))
+do
+  config_team="$(echo "${config}" | jq -r --argjson i "$cur_config" '.[$i] | to_entries[] | .key')"
+  config_wildcard="$(echo "${config}" | jq -r --argjson i "$cur_config" '.[$i] | to_entries[] | .value')"
 for config_file in $(ls ${config_wildcard} 2> /dev/null); do
     {
       autopilot_config="$(yq eval -o=json "${config_file}" 2>/dev/null | jq -rc '.autopilot_config')"
@@ -58,7 +62,7 @@ for config_file in $(ls ${config_wildcard} 2> /dev/null); do
     } || {
       pipelines="$(yq read --tojson "${config_file}" | jq -r '.pipelines[] | @base64')"
     }
-    team="$(echo "${config}" | jq -r '.[] | to_entries[] | select(.value=="'"$config_wildcard"'").key')"
+    team="${config_team}"
 
     for pipeline in ${pipelines}; do
       _jq() {
