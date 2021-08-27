@@ -1,0 +1,11 @@
+platform: linux
+image_resource:
+  type: registry-image
+  source: { repository: efejjota/concourse-autopilot-resource }
+inputs:
+- name: repository
+outputs:
+- name: regenerated
+run:
+  path: autopilot
+  args: [ 'repository', '((config))', 'regenerated' ]
