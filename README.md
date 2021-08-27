@@ -2,70 +2,32 @@
 
 Bootstrap and manage your Concourse pipelines in a GitOps fashion:<br />
 
-## Source Configuration
+## Quickstart
 
-- `uri`: _Required._ The location of the [**autopilot repo**](#autopilot-repo).
-- `branch`: The branch to track. If unset, the default branch is used.
-- `config`: _Required_ A key:value pair of **team** : [**config file**](#config-file)
-  - key: The Concourse team to which you want to set the pipelines listed in the **config file**
-  - value: The path to a **config file**. It must be relative to the root of the **autopilot repo**<br />
-    [_You can use wildcards to grant your autopilot pipeline superpowers_](#autopilot-superpowers)
+### My repository is already configured with Autopolot
 
-## Behaviour
-
-### `check`
-
-Triggers a new version whenever any of these happens:
-- The **autopilot repo** branch you are tracking gets a new commit
-- You update the **autopilot pipeline** using `fly set-pipeline`
-- A new version of the `concourse-autopilot-resource` is published
-
-This ensures that the pipelines are always fresh and immediately react
-to any changes made to the configuration or the autopilot repo.
-
-### `get`
-
-Generates a `pipeline.yml` with a set of `set_pipeline` steps which will keep your Concourse instance in sync with the **autopilot repo** you are tracking.
-
-The recommended way to set this `pipeline.yml` is to use `set_pipeline: self` in your **autopilot pipeline**.
-
-Your **autopilot pipeline** should not contain any custom resource, job, etc. apart from the ones listed in the example below _since they will be overwritten by the `set_pipeline: self` step._
-
-### `put`
-
-NO-OP
-
-## Examples
-
-* [Example autopilot repository](https://github.com/efejjota/concourse-autopilot-example): _ready-to-run experiment to test autopilot resource_
-* Example autopilot pipeline:
-```yaml
----
-resource_types:
-- name: autopilot
-  type: registry-image
-  source:
-    repository: efejjota/concourse-autopilot-resource
-
-resources:
-- name: autopilot
-  type: autopilot
-  source:
-     uri: https://your-autopilot-repo-url
-     config:
-     - team1: autopilot/team1/*.yml
-     - team2: autopilot/team2/*.yml
-     - main: autopilot/some-pipelines.yml
-
-jobs:
-- name: sync-pipelines
-  plan:
-  - get: autopilot
-    trigger: true
-
-  - set_pipeline: self
-    file: autopilot/pipeline.yml
+```bash
+# Clone your repository. Skip this step if you already have a local copy
+git clone ${your_repo_url:-https://github.com/efejjota/concourse-autopilot-example.git} my-repo
 ```
+```bash
+# `cd` into your repository folder
+cd my-repo
+```
+```bash
+# Use `fly execute` to bootstrap Autopilot in your Concourse
+fly -t ${concourse_target:?}                        \
+    execute                                         \
+    -v config=${config_path:-.autopilot/config.yml} \
+    -i repository=.                                 \
+    -o regenerated=regenerated                      \
+    -c <(curl -L https://raw.githubusercontent.com/efejjota/autopilot/main/tasks/gen-pipeline.yml)  \
+ && sh regenerated/set-autopilot.sh
+```
+
+### It's my first time using Autopilot
+
+`TO DO`: Describe how to setup Autopilot in your repository
 
 ## Additional Info
 
