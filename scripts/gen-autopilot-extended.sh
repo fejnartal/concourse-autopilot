@@ -3,6 +3,7 @@ set -euo pipefail
 
 repodir="$1"
 target_path="$2"
+outdir="$3"
 
 pushd "${repodir}" &>/dev/null
 
@@ -134,12 +135,8 @@ jobs:
       outputs:
       - name: regenerated
       run:
-        path: /bin/bash
-        args:
-        - \"-e\"
-        - \"-c\"
-        - |
-          /opt/resource/scripts/gen-autopilot-extended.sh \"repository\" \"${target_path}\" > regenerated/pipeline.yml
+        path: autopilot
+        args: [ 'repository', '${target_path}', 'regenerated' ]
 
   - set_pipeline: self
     file: regenerated/pipeline.yml
@@ -147,10 +144,27 @@ jobs:
 ${generated_jobs}
 "
 
+{
+  concourse_url="$(yq eval -o=json "${target_path}" 2>/dev/null | jq -rc '.concourse.url')"
+  concourse_team="$(yq eval -o=json "${target_path}" 2>/dev/null | jq -rc '.concourse.team')"
+} || {
+  concourse_url="$(yq read --tojson "${target_path}" | jq -rc '.concourse.url')"
+  concourse_team="$(yq read --tojson "${target_path}" | jq -rc '.concourse.team')"
+}
+
 popd &> /dev/null
 
 {
-  echo "${generated_manifest}" | yq eval -o=json 2>/dev/null | jq '.resources |= unique' | yq eval --prettyPrint 2>/dev/null
+  echo "${generated_manifest}" | yq eval -o=json 2>/dev/null | jq '.resources |= unique' | yq eval --prettyPrint 2>/dev/null > "${outdir}/pipeline.yml"
 } || {
-  echo "${generated_manifest}" | yq read --tojson - | jq '.resources |= unique' | yq read --prettyPrint -
+  echo "${generated_manifest}" | yq read --tojson - | jq '.resources |= unique' | yq read --prettyPrint - > "${outdir}/pipeline.yml"
 }
+
+cat << EOF > "${outdir}/set-autopilot.sh"
+#!/bin/bash
+
+fly -t autopilot login -c "${concourse_url}" --team-name "${concourse_team}"
+fly -t autopilot set-pipeline -p autopilot -c "regenerated/pipeline.yml"
+EOF
+
+chmod +x "${outdir}/set-autopilot.sh"

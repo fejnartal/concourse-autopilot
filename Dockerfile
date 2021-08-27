@@ -15,4 +15,4 @@ FROM ubuntu
 COPY --from=yq_cli yq /usr/local/bin/yq
 COPY --from=jq_cli jq /usr/local/bin/jq
 
-COPY . /opt/resource
+COPY scripts/gen-autopilot-extended.sh /usr/local/bin/autopilot
