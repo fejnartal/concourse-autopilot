@@ -74,6 +74,7 @@ for config_file in $(ls ${config_wildcard} 2> /dev/null); do
 - name: set-\(.name)
   plan:
   - get: repository
+    trigger: true
     passed: [sync-pipelines]
   - get: \(.repository)
     trigger: true
