@@ -1,0 +1,22 @@
+name: Push image to DockerHub
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build-and-publish-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.0
+        name: Check out code
+
+      - uses: mr-smithers-excellent/docker-build-push@v5
+        name: Build & push Docker image
+        with:
+          image: efejjota/concourse-autopilot
+          registry: docker.io
+          addLatest: true
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
