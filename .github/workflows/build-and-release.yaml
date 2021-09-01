@@ -22,7 +22,8 @@ jobs:
 
       - name: Create release
         uses: softprops/action-gh-release@v1
-        tag_name: ${{ github.ref }}
+        with:
+          tag_name: ${{ github.ref }}
 
       - uses: wangyoucao577/go-release-action@v1.20
         with:
