@@ -38,6 +38,7 @@ jobs:
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           project_path: "./src"
+          binary_name: autopilot
           asset_name: autopilot-${{ matrix.goos }}-${{ matrix.goarch }}
           release_tag: ${{ steps.get_version.outputs.version }}
 
