@@ -1,9 +1,8 @@
 name: Build and release
 
 on:
-  push:
-    tags:
-      - "*"
+  release:
+    types: [created]
 
 jobs:
   releases-matrix:
@@ -20,21 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-
       - uses: wangyoucao577/go-release-action@v1.20
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           project_path: "./src"
-          binary_name: "autopilot"
-          asset_name: ${BINARY_NAME}-${GOOS}-${GOARCH}
-          release_tag: ${{ github.ref }}
+          asset_name: autopilot-${{ matrix.goos }}-${{ matrix.goarch }}
 
+  releases-matrix:
+    name: Release Go Binary
+    needs: releases-matrix
+    steps:
       - uses: mr-smithers-excellent/docker-build-push@v5
         name: Build & push Docker image
         with:
@@ -42,5 +38,5 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tags: ${{ github.ref }}
-          buildArgs: RELEASE_TAG=${{ github.ref }}
+          tags: ${{ github.event.release.tag_name }}
+          buildArgs: RELEASE_TAG=${{ github.event.release.tag_name }}

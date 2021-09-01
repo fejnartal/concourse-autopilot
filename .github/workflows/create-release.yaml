@@ -1,0 +1,12 @@
+name: Build and release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  create-release:
+    steps:
+      - name: Create release
+        uses: softprops/action-gh-release@v1
