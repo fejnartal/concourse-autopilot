@@ -43,5 +43,4 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tags: ${{ github.ref }}
-          buildArgs:
-          - RELEASE_TAG=${{ github.ref }}
+          buildArgs: RELEASE_TAG=${{ github.ref }}
