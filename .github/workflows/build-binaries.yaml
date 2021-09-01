@@ -1,8 +1,9 @@
 name: Release GO binaries
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - "*"
 
 jobs:
   releases-matrix:
@@ -25,4 +26,5 @@ jobs:
           goarch: ${{ matrix.goarch }}
           project_path: "./src"
           binary_name: "autopilot"
-          extra_files: LICENSE README.md
+          asset_name: ${BINARY_NAME}-${GOOS}-${GOARCH}
+          release_tag: ${{ github.ref }}

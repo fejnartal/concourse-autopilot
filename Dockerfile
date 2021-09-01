@@ -1,9 +1,7 @@
-FROM golang:bullseye AS builder
-COPY src $GOPATH/src/concourse-autopilot/
-
-WORKDIR $GOPATH/src/concourse-autopilot/
-RUN go get -d -v
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/autopilot
+FROM curlimages/curl AS builder
+ARG RELEASE_TAG
+RUN curl -o /tmp/autopilot -L https://github.com/efejjota/concourse-autopilot/releases/download/${RELEASE_TAG}/autopilot-linux-amd64 \
+ && chmod +x /tmp/autopilot
 
 FROM scratch
-COPY --from=builder /go/bin/autopilot /go/bin/autopilot
+COPY --from=builder /tmp/autopilot /go/bin/autopilot
