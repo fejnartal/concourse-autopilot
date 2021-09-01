@@ -44,6 +44,8 @@ jobs:
   docker-build:
     name: Docker build
     needs: releases-matrix
+    runs-on: ubuntu-latest
+
     steps:
       - id: get_version
         uses: battila7/get-version-action@v2
