@@ -40,25 +40,7 @@ func Gen() {
 		// Currently we store the Path as if it was part of the target file
 		// ****************************************************************
 		targetConfig.Path, _ = filepath.Rel(repoDir, configPath)
-
-		var allPacksConfig []core.PackConfig
-		for _, pack := range targetConfig.Packs {
-			packFiles, _ := filepath.Glob(path.Join(repoDir, pack.Path))
-
-			for _, packFile := range packFiles {
-				packConfig, err := readPackConfig(packFile)
-				if err != nil {
-					log.Fatal(err)
-					os.Exit(1)
-				}
-				// **************************************************************
-				// SMELL!!!! TODO - Improve the way we handle Team for pack files
-				// Currently we store the team as if it was part of the pack file
-				// **************************************************************
-				packConfig.Team = pack.Team
-				allPacksConfig = append(allPacksConfig, packConfig)
-			}
-		}
+		allPacksConfig := readAllPacksConfig(targetConfig, repoDir)
 
 		autopilotPipeline, err := generatePipeline(targetConfig, allPacksConfig)
 		if err != nil {
@@ -129,4 +111,26 @@ func writePipeline(generatedPipeline core.AutopilotPipeline, outDir string) erro
 		return err
 	}
 	return nil
+}
+
+func readAllPacksConfig(targetConfig core.TargetConfig, repoDir string) []core.PackConfig {
+	allPacksConfig := []core.PackConfig{}
+	for _, pack := range targetConfig.Packs {
+		packFiles, _ := filepath.Glob(path.Join(repoDir, pack.Path))
+
+		for _, packFile := range packFiles {
+			packConfig, err := readPackConfig(packFile)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			// **************************************************************
+			// SMELL!!!! TODO - Improve the way we handle Team for pack files
+			// Currently we store the team as if it was part of the pack file
+			// **************************************************************
+			packConfig.Team = pack.Team
+			allPacksConfig = append(allPacksConfig, packConfig)
+		}
+	}
+	return allPacksConfig
 }
